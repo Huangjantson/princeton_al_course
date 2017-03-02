@@ -1,0 +1,112 @@
+import edu.princeton.cs.algs4.TST;
+import java.util.LinkedList;
+
+public class BoggleSolver {
+
+	private boolean solved;
+    
+	// Initializes the data structure using the given array of strings as the dictionary.
+    // (You can assume each word in the dictionary contains only the uppercase letters A through Z.)
+    public BoggleSolver(String[] dictionary)
+    {
+    	//build dictionary
+    }
+    
+    // Returns the set of all valid words in the given Boggle board, as an Iterable.
+    public Iterable<String> getAllValidWords(BoggleBoard board)
+    {
+    	return null;
+    }
+    
+    private class boardNode
+    {
+    	private int i,j;
+    	boardNode(int i, int j)
+    	{
+    		this.i = i;
+    		this.j = j;
+    	}
+    }
+    
+    //return a TST for the board's possible strings, storing length as the value
+    private TST<Integer> buildBoard(BoggleBoard board)
+    {
+    	TST<Integer> boardTokenList = new TST<Integer>();
+    	int boardRows = board.rows();
+    	int boardCols = board.cols();
+    	boolean[][] searching = new boolean[boardRows][boardCols];
+    	
+    	for (int i = 0; i < boardRows; i++)
+    		for (int j = 0; j < boardCols; j++)
+    			//DFS-like algorithm for each node possible paths
+    			{
+    				String possible = ""+board.getLetter(i, j);
+    				boardNode starting = new boardNode(i, j);
+    				searching[i][j] = true;
+    				concatenateNext(starting, boardTokenList, searching, possible, board);
+    				searching[i][j] = false;
+    			}
+    	return boardTokenList;
+    }
+    
+    //return the available next locations for the current node
+    private void concatenateNext(boardNode startNode, TST<Integer> boardTokenList,
+    		boolean[][] searching, String prefix, BoggleBoard board)
+    {
+    	int iMax = board.rows() - 1;
+    	int jMax = board.cols() - 1;
+    	
+    	//iStart,jStart,iEnd,jEnd
+    	int iStart, jStart, iEnd, jEnd;
+    	
+    	if (startNode.i - 1 < 0)
+    		iStart = 0;
+    	else
+    		iStart = startNode.i - 1;
+    	
+    	if (startNode.j - 1 < 0)
+    		jStart = 0;
+    	else
+    		jStart = startNode.j - 1;
+    	
+    	if (startNode.i + 1 > iMax)
+    		iEnd = iMax;
+    	else
+    		iEnd = startNode.i + 1;
+    	
+    	if (startNode.j + 1 > jMax)
+    		jEnd = jMax;
+    	else
+    		jEnd = startNode.j + 1;
+    	
+    	for (int i = iStart; i<=iEnd;i++)
+    		for (int j = jStart; j<=jEnd;j++)
+    			if (!searching[i][j])
+    			{
+    				searching[i][j] = true;
+    				//recursive find the available strings
+    				String current = prefix + board.getLetter(i, j);
+    				boardTokenList.put(current, current.length());
+    				concatenateNext(new boardNode(i,j), boardTokenList, searching,
+    						current, board);
+    				searching[i][j] = false;
+    			}
+    }
+    
+    // Returns the score of the given word if it is in the dictionary, zero otherwise.
+    // (You can assume the word contains only the uppercase letters A through Z.)
+    public int scoreOf(String word)
+    {
+    	return 0;
+    }
+    
+
+	public static void main(String[] args) 
+	{
+		// TODO Auto-generated method stub
+		char a = 'P';
+		String test = " "+a;
+		System.out.println(test);
+	}
+
+}

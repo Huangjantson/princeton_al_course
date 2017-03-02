@@ -1,0 +1,304 @@
+import java.util.LinkedList;
+import java.util.HashMap;
+import edu.princeton.cs.algs4.In;
+import java.util.TreeSet;
+
+import edu.princeton.cs.algs4.FordFulkerson;
+import edu.princeton.cs.algs4.FlowNetwork;
+import edu.princeton.cs.algs4.FlowEdge;
+
+public class BaseballElimination {
+    private final int teamNumber;
+    private final String[] teams;
+    private final HashMap<String, Integer> teamDict;
+    private final int[] wins;
+    private final int[] loss;
+    private final int[] totalRemain;
+    private final int[][] remaining;
+    private int maxWin;
+    private boolean buildTeamIter;
+    private TreeSet<String> teamIter;
+    private boolean[] eliminatedTestDone;
+    private boolean[] eliminated;
+    private LinkedList<String>[] eliminatedBy;
+    
+    
+    public BaseballElimination(String filename) {
+        In input = new In(filename);
+        teamNumber = input.readInt();
+        
+        teams = new String[teamNumber];
+        teamDict = new HashMap<String, Integer>();
+
+        wins = new int[teamNumber];
+        loss = new int[teamNumber];
+        totalRemain = new int[teamNumber];
+        remaining = new int[teamNumber][teamNumber];
+        maxWin = 0;
+        
+        for (int count = 0; count < teamNumber; count++)
+        {
+            teams[count] = input.readString();
+            teamDict.put(teams[count], count);
+            wins[count] = input.readInt();
+            loss[count] = input.readInt();
+            totalRemain[count] = input.readInt();
+            for (int i = 0; i < teamNumber; i++)
+                remaining[count][i] = input.readInt();
+            
+            if (wins[count] > maxWin)
+                maxWin = wins[count];
+        }
+        input.close();
+        
+        buildTeamIter = false;
+        eliminatedTestDone = new boolean[teamNumber];
+        eliminated = new boolean[teamNumber];
+        eliminatedBy = (LinkedList<String>[]) new LinkedList[teamNumber];
+    }
+    
+    private class TeamFlowNet extends FlowNetwork 
+    {
+        private int[] teamVertice;
+        private final int terminal; 
+        //private int[][] gameVertice;
+        
+        //build network by team number
+        public TeamFlowNet(BaseballElimination BE, String checkTeam) 
+        {                
+            //number of the vertices: 2 for source and terminal,     
+            //(teamNumber-1)*(teamNumber-2)/2 for against
+            //teamNumber-1 for teams
+            super(2+(BE.numberOfTeams()-1)
+                      *(BE.numberOfTeams()-2)/2+BE.numberOfTeams()-1);
+            terminal = this.V() - 1;
+            
+            if (BE.numberOfTeams() < 2)
+                throw new java.lang.IllegalArgumentException("Not enough teams");
+            
+            teamVertice = new int[teamNumber];
+            //gameVertice = new int[teamNumber][teamNumber];
+            
+            //0 for source, starting from 1
+            int index = 0;
+            int checkTeamID = BE.teamID(checkTeam);
+            
+            //vertice for teams excluding the checking team
+            for (int i = 0; i < teamNumber; i++)
+            {    
+                if (i == checkTeamID)
+                    continue;
+                index++;
+                teamVertice[i] = index;
+                
+                //connect team vertex to terminal vertex
+                int weightForTeam = 
+                        BE.wins[checkTeamID] + BE.totalRemain[checkTeamID]-wins[i];
+                //System.out.println("wins["+checkTeamID+"] + totalRemain["+checkTeamID+"]-wins["+i+"]:"+BE.wins[checkTeamID]+","+BE.totalRemain[checkTeamID]+","+wins[i]+","+"="+weightForTeam);
+
+                if (weightForTeam < 0)
+                    weightForTeam = 0;
+                FlowEdge tempEdge = new FlowEdge(index, terminal,
+                        weightForTeam);
+                this.addEdge(tempEdge);
+            }
+            
+            //allocate vetice for the games
+            for (int i = 0; i < teamNumber-1; i++)
+            {
+                if (i != checkTeamID)
+                    for (int j = i + 1; j < teamNumber; j++)
+                        if ((j != checkTeamID) && (i != j))
+                        {
+                          index++;
+                          //gameVertice[i][j] = index;
+                          //gameVertice[j][i] = index;
+                          
+                          //connect game vertex to source vertex 
+                          FlowEdge tempEdge = new FlowEdge(0, index,
+                                    BE.remaining[i][j]);
+                          this.addEdge(tempEdge);
+                          
+                          //connect game vertex to team1 vertex 
+                          tempEdge = new FlowEdge(index, teamVertice[i],
+                                    Double.POSITIVE_INFINITY);
+                          this.addEdge(tempEdge);
+                          
+                          //connect game vertex to team2 vertex 
+                          tempEdge = new FlowEdge(index, teamVertice[j],
+                                    Double.POSITIVE_INFINITY);
+                          this.addEdge(tempEdge);
+                        }
+            }
+        }
+        
+        //return the vertice ID in the flow graph belong to the team
+        public int teamVerticeID(int t)
+        {
+            return teamVertice[t];
+        }
+        
+        public int sourceVertice()
+        {
+            return 0;
+        }
+        
+        public int terminalVertice()
+        {
+            return V()-1;
+        }
+        
+    }
+    
+    // number of teams
+    public              int numberOfTeams()                        
+    {
+        return teamNumber;
+    }
+    
+    // all teams
+    public Iterable<String> teams()                                
+    {
+    	buildTeamTree();
+        return teamIter;
+    }
+    
+    private void buildTeamTree()
+    {
+        if (!buildTeamIter)
+        {
+            teamIter = new TreeSet<String>();
+            for (int i = 0; i < teamNumber; i++)
+                teamIter.add(teams[i]);
+            buildTeamIter = true;
+        }
+    }
+    
+    //return Id for a team
+    private int teamID(String team)
+    {
+    	buildTeamTree();
+    	if (!teamIter.contains(team))
+    		throw new IllegalArgumentException();
+        return teamDict.get(team);
+    }
+    
+    // number of wins for given team
+    public              int wins(String team)  
+    {	
+    	buildTeamTree();
+    	if (!teamIter.contains(team))
+    		throw new IllegalArgumentException();
+        return wins[teamID(team)];
+    }
+    
+    // number of losses for given team
+    public              int losses(String team)   
+    {
+    	buildTeamTree();
+    	if (!teamIter.contains(team))
+    		throw new IllegalArgumentException();
+    	return loss[teamID(team)];
+    }
+    
+    // number of remaining games for given team
+    public              int remaining(String team)                 
+    {
+    	buildTeamTree();
+    	if (!teamIter.contains(team))
+    		throw new IllegalArgumentException();
+        return totalRemain[teamID(team)];
+    }
+    
+    // number of remaining games between team1 and team2
+    public              int against(String team1, String team2)    
+    {
+    	buildTeamTree();
+    	if (!(teamIter.contains(team1)&&teamIter.contains(team2)))
+    		throw new IllegalArgumentException();
+    	
+    	return remaining[teamID(team1)][teamID(team2)];
+    }
+    
+    // is given team eliminated?
+    public          boolean isEliminated(String team)
+    {    
+    	
+    	buildTeamTree();
+    	if (!teamIter.contains(team))
+    		throw new IllegalArgumentException();
+    	
+    	if (this.numberOfTeams() == 1)
+    		return false;
+    	
+    	int teamId = teamID(team);
+        if (!eliminatedTestDone[teamId])
+        {
+            boolean trivial = false;
+            LinkedList<String> eliminatedByThese = new LinkedList<String>();
+            
+            //Trivial elimination
+            for (int i = 0; i < teamNumber; i++)
+                if (wins[teamId] + totalRemain[teamId] < wins[i])
+                {
+                    trivial = true;
+                    eliminatedTestDone[teamId] = true;
+                    eliminated[teamId] = true;
+                    eliminatedByThese.add(this.teams[i]);
+                }
+            
+            //Nontrivial elimination
+            if (!trivial)
+            {
+                boolean someTeamVerticeInCut = false;
+                
+                
+                TeamFlowNet teamFlownet = new TeamFlowNet(this, team);
+                FordFulkerson FFsolver = new FordFulkerson(teamFlownet,
+                    teamFlownet.sourceVertice(), teamFlownet.terminalVertice());
+                
+                for (int i = 0; i < teamNumber; i++)
+                    if (i != teamId)
+                        if (FFsolver.inCut(teamFlownet.teamVerticeID(i)))
+                            {
+                                someTeamVerticeInCut = true;
+                                eliminatedByThese.add(this.teams[i]);
+                            }
+                eliminated[teamId] = someTeamVerticeInCut;
+                
+            }
+            if (eliminated[teamId])
+                this.eliminatedBy[teamId] = eliminatedByThese;
+        }
+        return eliminated[teamId];
+    }              
+    
+    // subset R of teams that eliminates given team; null if not eliminated
+    public Iterable<String> certificateOfElimination(String team)
+    {
+        if (!isEliminated(team))
+            return null;
+        
+        return eliminatedBy[teamID(team)];
+    }  
+    
+    public static void main(String[] args) {
+        String testLocation = 
+                "D:\\self\\algorithms\\assignment specification\\baseball";
+        String file = "teams5.txt";
+        
+        String testFile = testLocation + "\\" + file;
+        BaseballElimination test = new BaseballElimination(testFile);
+        
+        System.out.println(test.numberOfTeams());
+        for (String team : test.teams())
+        {
+            System.out.
+            println(team + " "+test.wins(team)+
+                    " "+test.losses(team)+" "+test.remaining(team));
+        }
+                        
+        System.out.println(test.certificateOfElimination("Detroit"));
+    }
+
+}
