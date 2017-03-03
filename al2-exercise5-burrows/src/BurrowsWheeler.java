@@ -1,6 +1,5 @@
 import edu.princeton.cs.algs4.BinaryStdIn;
 import edu.princeton.cs.algs4.BinaryStdOut;
-import edu.princeton.cs.algs4.In;
 
 
 public class BurrowsWheeler {
@@ -8,12 +7,16 @@ public class BurrowsWheeler {
     // input and writing to standard output
     public static void encode()
     {
-        In in = new In();
         StringBuffer buffer = new StringBuffer();
-        while (in.hasNextChar())
-            buffer.append(in.readChar());
+        while (!BinaryStdIn.isEmpty())
+        {	
+        	char c = BinaryStdIn.readChar();
+        	//System.out.println(c);
+        	buffer.append(c);
+        }
         
         String s = buffer.toString();
+        //System.out.println(s);
         char[] result = new char[s.length()];
         CircularSuffixArray csa = new CircularSuffixArray(s);
         
@@ -28,10 +31,9 @@ public class BurrowsWheeler {
                 first = i;
         }
         
-        BinaryStdOut.write(first);
+        BinaryStdOut.write(first);;
         
         for (int i = 0; i < csa.length(); i++)
-            //System.out.print(result[i]);
             BinaryStdOut.write(result[i]);
         
         BinaryStdOut.flush();
@@ -58,22 +60,30 @@ public class BurrowsWheeler {
         
         //rebuilding the head by radix sorting
         char[] head = new char[length];
-        int[] radix = new int[256];
+        int[] radix = new int[257];
 
         for (int j = 0; j < length; j++)
             radix[t[j]+1]++;
-        for (int r = 0; r < 255; r++)
-            radix[r+1] += radix[r];        
-        
+        /*
+        for (int i = 0; i < 255 ; i++)
+        	if (radix[i]!=0)
+        		System.out.println((char) i+":"+radix[i]);
+        */
+        for (int r = 0; r < 256; r++)
+            radix[r+1] += radix[r];  
+        /*
+        for (int i = 0; i < 255 ; i++)
+        	if (radix[i]!=0)
+        		System.out.print((char) (i-1)+":"+radix[i-1]);
+        */
         //get a copy of radix for future use
-        int[] start = new int[256];
+        int[] start = new int[257];
         for (int i = 0; i < 256; i++)
             start[i] = radix[i];
         
         for (int j = 0; j < length; j++)
             head[radix[t[j]]++] = t[j];
 
-        
         //generate the next[]
         int[] next =  new int[length];
         for (int i = 0; i < length; i++)
@@ -82,15 +92,29 @@ public class BurrowsWheeler {
             next[previous] = i;
             start[t[i]]++;
         }
-        
+        /*
+        System.out.println(first);        
+        for (int i = 0; i < length; i++)
+        	System.out.print(t[i]+" ");  
+        for (int i = 0; i < length; i++)
+        	System.out.print(next[i]+" ");                            
+        */
         //restore the original string by next[], first and t[]
         boolean[] check = new boolean[length];
         int checking = first;
+        //System.out.println(checking);
+        int searched = 0;
+        
         while (!check[checking])
         {
+            //System.out.println(checking +":" +next[checking] +":"+check[next[checking]]+":"+searched);
             check[checking] = true;
             BinaryStdOut.write(head[checking]);
-            checking = next[checking];
+            if ((check[next[checking]])&&(searched < length-1))
+            	checking = next[checking+1];
+            else
+            	checking = next[checking];
+            searched++;
         }
         BinaryStdOut.flush();    
     }

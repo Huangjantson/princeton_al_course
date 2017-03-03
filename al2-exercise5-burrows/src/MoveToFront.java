@@ -1,6 +1,5 @@
 import edu.princeton.cs.algs4.BinaryStdIn;
 import edu.princeton.cs.algs4.BinaryStdOut;
-import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.Out;
 
 public class MoveToFront {
@@ -12,21 +11,21 @@ public class MoveToFront {
         char[] alphabet = new char[256];
         for (int each = 0; each < 256; each++)
             alphabet[each] = (char) each;
-        In in = new In();
-        while (in.hasNextChar())
+        //In in = new In();
+        while (!BinaryStdIn.isEmpty())
         {
             //find the index for the char
             int id = 0;
-            char temp = in.readChar();
+            char temp = BinaryStdIn.readChar();
             
             for (int i = 0; i < 256; i++)
                 if (alphabet[i] == temp)
                 {    id = i;
                     break;
                 }
+            
             //write the index for the char
             BinaryStdOut.write((char) id);
-            
             
             //move the indexs for the chars
             char exchange = alphabet[id];
@@ -41,7 +40,6 @@ public class MoveToFront {
         }
         
         BinaryStdOut.close();
-        in.close();
     }
 
     // apply move-to-front decoding, 
@@ -60,7 +58,7 @@ public class MoveToFront {
             int id = (int) BinaryStdIn.readChar();
             
             //write char with the index
-            out.print(alphabet[id]);
+            BinaryStdOut.write(alphabet[id]);
             
             //move the indexs for the chars
             char exchange = alphabet[id];
@@ -73,6 +71,7 @@ public class MoveToFront {
             }
         }
         
+        BinaryStdOut.flush();
         BinaryStdIn.close();
         out.close();
     }

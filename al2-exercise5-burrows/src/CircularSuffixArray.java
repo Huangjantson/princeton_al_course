@@ -37,13 +37,13 @@ public class CircularSuffixArray {
             if (this.getClass() != o.getClass())
                 throw new java.lang.IllegalArgumentException();
             
-            if (this.firstRank < ((CircularSuffix) o).firstRank)
+            if (this.firstRank < o.firstRank)
                 return -1;
-            else if (this.firstRank > ((CircularSuffix) o).firstRank)
+            else if (this.firstRank > o.firstRank)
                 return 1;
-            else if (this.secondRank < ((CircularSuffix) o).secondRank)
+            else if (this.secondRank < o.secondRank)
                 return -1;
-            else if (this.secondRank > ((CircularSuffix) o).secondRank)
+            else if (this.secondRank > o.secondRank)
                 return 1;
             else
             return 0;
@@ -83,10 +83,21 @@ public class CircularSuffixArray {
         //initialize the ranks for tht first part by char and initialize ids
         for (int i = 0; i < length; i++)
             cs[i] = new CircularSuffix(charStore, i);
-        
+        /*
+        for (int i = 0; i < this.length; i++){
+            System.out.println(i+":"+(char) cs[i].firstRank+":"+(char) cs[i].secondRank);
+        }
+        */
         //initial sort : using nlogn sorting for the first two parts
         Arrays.sort(cs);
+       
+        /*
+        for (int i = 0; i < this.length; i++){
+            System.out.println(cs[i].toString()+":"+cs[i].start);
+        }
         
+        System.out.println("================================");
+        */
         //following sorts : using radix sorting 
         for (int l = 2; l < length; l = l*2)
         {
@@ -113,6 +124,8 @@ public class CircularSuffixArray {
             if (!repeatedRank)
                 break;
             
+            
+            
             //get the newFirst to the cs firstRank
             //rebuild the location array for the specified start
             int[] startLocation = new int[length];
@@ -132,21 +145,14 @@ public class CircularSuffixArray {
             }
             
             int scanLoc = 0;
-            int testT = 0;
             //sort the second part, based on the first part
-            while ((scanLoc < length - 1) && testT < 5)
+            while (scanLoc < length - 1)
             {    
                 assert firstCount[scanLoc] > 0;
                 //when 1 just pass
                 if (firstCount[scanLoc] == 1)
                     scanLoc++;
-                else if ((firstCount[scanLoc] > 1) && (firstCount[scanLoc] < 5))
-                {
-                    // optimization
-                    Arrays.sort(cs, scanLoc, scanLoc+firstCount[scanLoc]);
-                    scanLoc += firstCount[scanLoc];
-                }
-                else if (firstCount[scanLoc] >= 5)
+                else if (firstCount[scanLoc] > 1)
                 {
                     // radix sort
                     int[] radix = new int[length+1];
@@ -183,7 +189,8 @@ public class CircularSuffixArray {
     public static void main(String[] args)
     {
         CircularSuffixArray test = new CircularSuffixArray("ABRACADABRA!");
-        for (int i = 0; i < test.length; i++)
-            System.out.println(test.cs[i].toString());
+        for (int i = 0; i < test.length; i++){
+            System.out.println(test.cs[i].toString()+":"+test.index(i));
+        }
     }
 }
